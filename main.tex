@@ -14,9 +14,57 @@
 \usepackage{tocloft}
 \renewcommand\cftsecafterpnum{\vskip6pt}
 
+\usepackage{mdframed}
+
+\newenvironment{res}
+    { \begin{mdframed}[backgroundcolor=orange!10]}
+    {  \end{mdframed}}
+    
+\usepackage{xcolor}
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily,
+  showstringspaces=false,
+  commentstyle=\color{red},
+  keywordstyle=\color{blue}
+}
+ 
+\definecolor{commentext}{RGB}{0, 0, 102}
+\definecolor{score}{RGB}{153, 0, 0}
+
+
+\definecolor{bluekeywords}{rgb}{0.13,0.13,1}
+\definecolor{greencomments}{rgb}{0,0.5,0}
+\definecolor{turqusnumbers}{rgb}{0.17,0.57,0.69}
+\definecolor{redstrings}{rgb}{0.5,0,0}
+
+\lstdefinelanguage{bash}
+    {morekeywords={let,insertOne,insertMany, update, replace, updateOne, updateMany, toArray,gt,lt,lte,gte, findOne,find,deleteOne, deleteMany,db, show, use, mongod, mongo, import, as, public, class, void, static, echo, new, match, with, rec, open, module, namespace, type, of, member, and, for, in, do, begin, end, fun, function, try, mutable, if, then, else},
+    keywordstyle=\color{bluekeywords},
+    sensitive=false,
+    morecomment=[l][\color{greencomments}]{///},
+    morecomment=[l][\color{greencomments}]{//},
+    morecomment=[s][\color{greencomments}]{{(*}{*)}},
+    morestring=[b]",
+    stringstyle=\color{redstrings}
+    }
+
+\lstnewenvironment{code}
+  {
+    \lstset{
+        language=bash,
+        basicstyle=\ttfamily,
+        breaklines=true,
+        columns=fullflexible,
+        backgroundcolor = \color{orange!10}}
+  }
+  {
+  }
+
+
 \begin{document}
-\title{Heuristic Understanding of DFT}
+\title{Practical Understanding of DFT}
 \author{Sizhe Liu\\Department of Mechanical Science and Engineering \\University of Illinois at Urbana-Champaign\\ } 
+\date{Version 3.14}
 \begin{titlingpage}
 \maketitle
 \end{titlingpage}
@@ -448,10 +496,73 @@ To answer this question, we perform two DFT calculations. First, we calculate th
 \end{equation} 
 where $E_{vac}$ is the energy of a formula unit containing a vacancy that is surrounded by the stoichiometric material. We can view this expression as a definition for $E_{vac}$, as long as we remember that it is \textbf{only an accurate definition if our supercell is large enough}. This calculation for a supercell containing a vacancy should be performed \textbf{\textit{while holding the lattice constants for the supercell equal to those of the stoichiometric material}} since we are interested in a situation where a very low concentration of vacancies causes local distortions in the atomic positions but does not change the material’s overall crystal structure.
 
-Once we have determined $E_crystal$ and $E_vac$ in this way, we can write the energy for a sample of the material with N formula units and m vacancies as
+Once we have determined $E_{crystal}$ and $E_{vac}$ in this way, we can write the energy for a sample of the material with N formula units and m vacancies as
 \begin{equation}
     \frac{E(N, m)}{N}\cong(1-c)E_{crystal}+cE_{vac}
 \end{equation}
 where $c=m/N$ and $m$ is the number of Oxygen vacancies in the system. If we use this energy in the grand potential, we have a definition of the grand potential in terms of the vacancy concentration.
+
+\section{DFT for LUMO and HOMO Calculation/Visualization}
+Lowest unoccupied molecular orbital (LUMO) and highest occupied molecular orbital (HOMO) are two important tools in conductivity analysis of organic/molecular solids. The calculation of LUMO/HUMO energy levels can simply follow the steps listed below:
+\begin{itemize}
+    \item Perform spin-polarized geometry optimization using PBE/PBEsol functional with gamma k-point scheme
+    \item Improve the accuracy for the energetics by performing SCF calculation with HSF functional
+    \item Find bands information at gamma point for spin-up and spin-down states
+    \item Because HOMO and LUMO are doubly degenerate, we just need to find energy levels that are closest to the Fermi energy level in both spin-up and spin-down states.
+    \item The level that higher than the Fermi level is then LUMO, and the one lower than the Fermi level is HOMO
+\end{itemize}
+Here, we use an example of some results from a gamma point calculation to show how to find LUMO and HOMO. In the spin-polarized calculation, we will have some outputs like this:
+\begin{res}
+------ SPIN UP ------------
+
+
+          k = 0.0000 0.0000 0.0000 ( 47171 PWs)   bands (ev):
+
+   -34.3196 -21.0375 -17.4698 -17.4697 -14.7359  -9.1985  -9.1983  -0.6483
+    -0.1403  -0.0924
+
+ ------ SPIN DOWN ----------
+
+
+          k = 0.0000 0.0000 0.0000 ( 47171 PWs)   bands (ev):
+
+   -33.1724 -19.2543 -13.7742 -12.6937 -12.6937  -4.9925  -4.9924  -0.5833
+    -0.0519  -0.0089
+
+     the Fermi energy is    -8.4505 ev
+\end{res}
+From these values, we know that HOMO levels (-9.1985, -9.1983) are degenerate, and degenerate LUMO levels are -4.9925, -4.9924.
+
+\subsection{Using Quantum Espresso to visualize HOMO and LUMO}
+Using the example above, we should use charges that belong to the first k-point to plot HOMO, and use the second k-point to plot LUMO. Here are some templates for input files to extract corresponding charge density:
+
+For HOMO:
+\begin{code}
+\text{&inputpp
+    prefix  = 'FILEA'
+    outdir = 'TMP_DIR/'
+    filplot = 'FILEA-HOMOa.dat'
+    plot_num= 7
+    kpoint=1
+    kband=6
+ /
+
+PARA_PREFIX ESPRESSO/pp.x PARA_POSTFIX < INPFILE >> OUTFILE}
+\end{code}
+\begin{code}
+\text{&inputpp
+    prefix  = 'FILEA'
+    outdir = 'TMP_DIR/'
+    filplot = 'FILEA-HOMOa.dat'
+    plot_num= 7
+    kpoint=1
+    kband=7
+ /
+
+PARA_PREFIX ESPRESSO/pp.x PARA_POSTFIX < INPFILE >> OUTFILE}
+\end{code}
+We later \textbf{sum up the results from the runs above to get the charge distribution for HOMO because the charge distribution of the bands \# 6 and 7 correspond to the HOMO}. Do the same for kpoint=2 to get the LUMO.
+
+
 
 \end{document}

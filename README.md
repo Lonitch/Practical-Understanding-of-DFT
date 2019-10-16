@@ -1,6 +1,5 @@
 # Practical-Understanding-of-DFT
-This is a latex version of my reading notes on Density Functional Theory
-over last four years. I've been trying a bunch of different techniques to produce new research. 
+This is a latex version of my reading notes on Density Functional Theory. I've been trying a bunch of different techniques to produce new research. 
 Among these techniques that are self-taught, 
 DFT seems to be a numerical method that is fairly easy to internalize conceptually. 
 The notes here are made when I was reading the following resources:
